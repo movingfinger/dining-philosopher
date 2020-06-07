@@ -24,14 +24,13 @@
 #define DELAY 5000
 
 pthread_mutex_t *m_fork;			// mutex for fork
-pthread_t *philo;					
+//pthread_t *t_philo;
 pthread_mutex_t food_lock;
 pthread_mutex_t num_can_eat_lock;	
 
 long long num_philo = 4;			// number of philosophers
 long long num_can_eat;				// num_philo - 1 for token system
 int sleep_seconds = 5;				// time to sleep
-int think_seconds = 5;				// time to sleep
 int eat_seconds = 5;				// time to eat
 int die_seconds = 5;				// time to die
 int food_limit = 5;					// number of times each philosopher must eat. If -1, it means not defined.
@@ -52,20 +51,24 @@ typedef struct	s_philosophers
 	long		current;
 	long		*time;
 	int			*death;
+	pthread_t	thread_philo;
+	pthread_t	thread_philo_time;
 }				t_philosophers;
 
 //void *philosopher (void *id);
 void *philosopher (void *arg);
-void grab_fork (int, int, char *);
+//void grab_fork (int, int, char *);
+void grab_fork (int, int);
 void down_forks (int, int);
 
-int food_on_table ();
+//int food_on_table ();
+int food_on_table (t_philosophers *philo);
 int get_token ();
 void return_token ();
 //void eat(int id, int left, int right);
 void eat(t_philosophers *philo, int left, int right);
 void *life_cycle(void *arg);
 void *time_ct(void *var);
-void Spawn(long *time, pthread_mutex_t **m_fork, int i);
+void Spawn(t_philosophers *philo, long *time, pthread_mutex_t **m_fork, int i);
 
 #endif

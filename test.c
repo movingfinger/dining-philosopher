@@ -16,54 +16,74 @@ int main(int ac, char **av)
 {
 	int i;
 	long time_basic;
+	t_philosophers *t_philo;
 
-	if (ac == 4)
+	if (ac == 6)
 	{
 		num_philo = atoi(av[1]);
-		sleep_seconds = atoi(av[2]);
-		food_limit = atoi(av[3]);
+		die_seconds = atoi(av[2]);
+		eat_seconds = atoi(av[3]);
+		sleep_seconds = atoi(av[4]);
+		food_limit = atoi(av[5]);
+	}
+	else if (ac == 5)
+	{
+		num_philo = atoi(av[1]);
+		die_seconds = atoi(av[2]);
+		eat_seconds = atoi(av[3]);
+		sleep_seconds = atoi(av[4]);
+		food_limit = -1;
 	}
 	num_can_eat = num_philo - 1;
 	food_temp = food_limit;
 	time_basic = 0;
 
+	printf("Number of philosopher is %lld\n", num_philo);
+	printf("Die time is %ds\n", die_seconds);
+	printf("Eat time is %ds\n", eat_seconds);
+	printf("Sleep time is %ds\n", sleep_seconds);
+	printf("food limit is %d\n", food_limit);
+
 	m_fork = (pthread_mutex_t *)malloc(sizeof(pthread_mutex_t) * num_philo);
-	philo = (pthread_t *)malloc(sizeof(pthread_t) * num_philo);
+	t_philo = (t_philosophers *)malloc(sizeof(t_philosophers) * num_philo);
 	pthread_mutex_init (&food_lock, NULL);
 	pthread_mutex_init (&num_can_eat_lock, NULL);
 
 	for (i = 0; i < num_philo; i++)
 	{
 		pthread_mutex_init (&m_fork[i], NULL);
-		Spawn(&time_basic, &m_fork, i);
+		Spawn(&t_philo[i], &time_basic, &m_fork, i);
 	}
+	//printf("Spawn done\n");
+
+	//for (i = 0; i < num_philo; i++)
+	//	pthread_join (t_philo[i].thread_philo, NULL);
 	for (i = 0; i < num_philo; i++)
-		pthread_join (philo[i], NULL);
+	{
+		pthread_join (t_philo[i].thread_philo, NULL);
+		pthread_join (t_philo[i].thread_philo_time, NULL);
+	}
+	//printf("All done!\n");
 	return (0);
 }
 
-int food_on_table ()
+int food_on_table (t_philosophers *philo)
 {
-	int myfood;
-
 	pthread_mutex_lock (&food_lock);
-	if (food_limit > 0)
-		food_limit--;
-	myfood = food_limit;
+	printf("Philosopher %d food left %d\n", philo->pos, philo->eat_count);
+	philo->eat_count--;
 	pthread_mutex_unlock (&food_lock);
-	return (myfood);
+	return (philo->eat_count);
 }
 
 void *philosopher (void *arg)
 {
 	t_philosophers *philo;
-	pthread_t thread;
 	int i;
 	int left_fork;
 	int right_fork;
 
 	philo = arg;
-	printf ("Philosopher %d is done thinking and now ready to eat. \n", philo->pos);
 	right_fork = philo->pos;
 	left_fork = philo->pos + 1;
 	i = 0;
@@ -71,49 +91,48 @@ void *philosopher (void *arg)
 	// Wrap around the forks.
 	if (left_fork == num_philo)
 		left_fork = 0;
-	pthread_create(&thread, NULL, life_cycle, philo);
-	//while (i != food_limit)
-	while (i = food_on_table())
+	//pthread_create(&philo->thread_philo, NULL, life_cycle, philo);
+	pthread_create(&philo->thread_philo_time, NULL, life_cycle, philo);
+	while (i = food_on_table(philo))
 	{
-		eat(philo, left_fork, right_fork);
-		pthread_create(&thread, NULL, life_cycle, philo);
-		//if (food_limit > 0)
-		//{
-		//	if (++i >= food_limit)
-		//	{
-		//		printf("food count fulfilled\n");
-		//		break;
-		//	}
-		//}
-		usleep(sleep_seconds * 1000);
 		philo->state = 1;
+		printf("Philosoher %d is thinkg\n", philo->pos);
+		usleep(10);
+		philo->state = 0;
+		printf ("Philosopher %d is eating. \n", philo->pos);
+		eat(philo, left_fork, right_fork);
+		pthread_create(&philo->thread_philo_time, NULL, life_cycle, philo);
+		philo->state = 2;
+		printf("Philosopher %d is sleeping now\n", philo->pos);
+		usleep(sleep_seconds * 1000);
+		if (!i)
+		{
+			printf("Philosopher %d died\n", philo->pos);
+			exit (0);
+		}
 	}
 
-	printf ("Philosopher %d is done eating. \n", philo->pos);
-
-	if (++*philo->death >= num_philo)
+	if (food_limit == 0)
 	{
-		printf("All philosophers died!\n");
+		printf("No food left!\n");
 		exit (0);
 	}
+
 	pthread_exit(0);
 	return (NULL);
 }
 
-void Spawn(long *time, pthread_mutex_t **m_fork, int i)
+void Spawn(t_philosophers *philo, long *time, pthread_mutex_t **m_fork, int i)
 {
-	t_philosophers *philo;
-	pthread_t thread;
 	static int death;
 
-	philo = (t_philosophers *)malloc(sizeof(t_philosophers));
 	philo->pos = i;
 	philo->eat_count = food_limit;
-	philo->state = 1; //thinking
+	philo->state = 1;
 	philo->death = &death;
 	philo->time = time;
 
-	pthread_create(&thread, NULL, philosopher, philo);
+	pthread_create(&philo->thread_philo, NULL, philosopher, philo);
 }
 
 void eat(t_philosophers *philo, int left, int right)
@@ -124,70 +143,18 @@ void eat(t_philosophers *philo, int left, int right)
 	philo->state = 2;
 	get_token ();
 
-	grab_fork (id, right, "right");
-	grab_fork (id, left, "left");
+	grab_fork (id, right);
+	grab_fork (id, left);
 
 	printf ("Philosopher %d: eating\n", id);
-	usleep (sleep_seconds * 1000);
+	usleep (eat_seconds * 1000);
 	down_forks (left, right);
 	return_token ();
 }
 
-//void eat(int id, int left, int right)
-//{
-//	get_token ();
-
-//	grab_fork (id, right, "right");
-//	grab_fork (id, left, "left");
-
-//	printf ("Philosopher %d: eating\n", id);
-//	usleep (sleep_seconds * 1000);
-//	down_forks (left, right);
-//	return_token ();
-//}
-
-//void *philosopher (void *num)
-//{
-//	int id;
-//	int i;
-//	int left_fork;
-//	int right_fork;
-//	int f;
-
-//	id = (int)num;
-//	printf ("Philosopher %d is done thinking and now ready to eat. \n", id);
-//	right_fork = id;
-//	left_fork = id + 1;
-
-//	// Wrap around the forks.
-//	if (left_fork == num_philo)
-//		left_fork = 0;
-
-//	while (f = food_on_table())
-//	{
-//		eat(id, left_fork, right_fork);
-//	}
-
-//	printf ("Philosopher %d is done eating. \n", id);
-//	return (NULL);
-//}
-
-//int food_on_table ()
-//{
-//	int myfood;
-
-//	pthread_mutex_lock (&food_lock);
-//	if (food_limit > 0)
-//		food_limit--;
-//	myfood = food_limit;
-//	pthread_mutex_unlock (&food_lock);
-//	return (myfood);
-//}
-
-void grab_fork (int phil, int c, char *hand)
+void grab_fork (int phil, int c)
 {
 	pthread_mutex_lock (&m_fork[c]);
-	printf ("Philosopher %d: has taken %s fork %d\n", phil, hand, c);
 }
 
 void down_forks (int c1, int c2)
@@ -233,7 +200,7 @@ void *time_ct(void *var)
 	while (1)
 	{
 		gettimeofday(&time2, NULL);
-		*elapsed = (((time2.tv_sec - time.tv_sec) * 1000 + ((time2.tv_usec - time.tv_usec) / 1000)));
+		*elapsed = (((time2.tv_sec - time.tv_sec) * 1000 + ((time2.tv_usec - time.tv_usec))));
 		if (*elapsed < 0)
 			*elapsed *= -1;
 	}
@@ -252,16 +219,20 @@ void *life_cycle(void *arg)
 	while (1)
 	{
 		gettimeofday(&time2, NULL);
-		elapsed = (((time2.tv_sec - time.tv_sec) * 1000 + ((time2.tv_usec - time.tv_usec) / 1000)));
+		elapsed = (((time2.tv_sec - time.tv_sec) * 1000 + ((time2.tv_usec - time.tv_usec))));
+		
 		// if timestamp over time to die, then die.
-		if (die_seconds <= elapsed)
-		{
+		if (die_seconds * 1000 <= elapsed)
+		{			
 			philo->current = *philo->time;
 			philo->state = 3;
-			printf("Philosopher %d dies\n", philo->pos);
+			printf("Die second is %d and elapsed is %llu. Philosopher %d died\n", die_seconds, elapsed, philo->pos);
 			exit (0);
 		}
 		if (philo->state == 0)	// if eating state
+		{
+			//printf("status changed to eating\n");
 			pthread_exit(NULL);
+		}
 	}
 }
