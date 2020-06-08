@@ -6,7 +6,7 @@
 /*   By: sako <sako@student.42.fr>                  +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2020/06/08 10:59:28 by sako              #+#    #+#             */
-/*   Updated: 2020/06/08 22:34:54 by sako             ###   ########.fr       */
+/*   Updated: 2020/06/08 23:14:57 by sako             ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -33,7 +33,8 @@ size_t ft_strlen(const char *str)
 {
 	int i;
 	for (i = 0; str[i]; i++)
-	return (i);	
+		;
+	return (i);
 }
 
 size_t ft_strlcat (char *dst, const char *src, size_t dstsize)

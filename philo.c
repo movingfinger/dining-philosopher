@@ -6,7 +6,7 @@
 /*   By: sako <sako@student.42.fr>                  +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2020/06/02 14:39:57 by sako              #+#    #+#             */
-/*   Updated: 2020/06/08 22:48:10 by sako             ###   ########.fr       */
+/*   Updated: 2020/06/09 00:01:12 by sako             ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -16,8 +16,8 @@ int main(int ac, char **av)
 {
 	int i;
 	long time_basic;
+	pthread_t t_time;
 	t_philosophers *t_philo;
-	pthread_t thread;
 
 	set_param(av, ac);
 	time_basic = 0;
@@ -27,12 +27,11 @@ int main(int ac, char **av)
 	pthread_mutex_init (&food_lock, NULL);
 	pthread_mutex_init (&num_can_eat_lock, NULL);
 
-	//pthread_create(&thread, NULL, time_ct, &time_basic);
-	gettimeofday(&time_start, NULL);
+	pthread_create(&t_time, NULL, time_ct, &time_basic);
 	for (i = 0; i < num_philo; i++)
 	{
 		pthread_mutex_init (&m_fork[i], NULL);
-		Spawn(&t_philo[i], &time_basic, &m_fork, i);
+		Spawn(&t_philo[i], &time_basic, i);
 	}	
 	for (i = 0; i < num_philo; i++)
 	{

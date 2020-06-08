@@ -6,7 +6,7 @@
 /*   By: sako <sako@student.42.fr>                  +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2020/06/08 17:39:41 by sako              #+#    #+#             */
-/*   Updated: 2020/06/08 22:37:34 by sako             ###   ########.fr       */
+/*   Updated: 2020/06/08 23:11:07 by sako             ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -64,7 +64,6 @@ void concat_str(t_philosophers *philo)
 {
 	char *time;
 	char *id;
-	char *test;
 	
 	set_str(philo);
 	time = ft_ltoa_base(timestamp[philo->pos], 10);

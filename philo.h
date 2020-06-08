@@ -6,7 +6,7 @@
 /*   By: sako <sako@student.42.fr>                  +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2020/06/02 14:39:49 by sako              #+#    #+#             */
-/*   Updated: 2020/06/08 22:33:33 by sako             ###   ########.fr       */
+/*   Updated: 2020/06/08 23:57:23 by sako             ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -48,7 +48,6 @@ long long		eat_seconds;				// time to eat
 long long		die_seconds;				// time to die
 long long		food_limit;				// number of times each philosopher must eat. If -1, it means not defined.
 int				check_food;
-struct timeval	time_start;
 long long		*timestamp;
 
 /*
@@ -80,10 +79,10 @@ void			grab_fork (t_philosophers *philo, int fork, int side);
 void			down_forks (int, int);
 
 int				food_on_table (t_philosophers *philo);
-int				get_token ();
+void			get_token ();
 void			return_token ();
 void			eat(t_philosophers *philo, int left, int right);
-void			Spawn(t_philosophers *philo, long *time, pthread_mutex_t **m_fork, int i);
+void			Spawn(t_philosophers *philo, long *time, int i);
 
 void			*life_cycle(void *arg);
 void			*time_ct(void *var);

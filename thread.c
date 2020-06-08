@@ -6,7 +6,7 @@
 /*   By: sako <sako@student.42.fr>                  +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2020/06/08 10:58:10 by sako              #+#    #+#             */
-/*   Updated: 2020/06/08 22:56:51 by sako             ###   ########.fr       */
+/*   Updated: 2020/06/08 23:13:43 by sako             ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -47,7 +47,7 @@ void *philosopher (void *arg)
 	if (left_fork == num_philo)
 		left_fork = 0;
 	pthread_create(&philo->thread_philo_time, NULL, life_cycle, philo);
-	while (i = food_on_table(philo))
+	while ((i = food_on_table(philo)))
 	{
 		philo->state = 1;
 		dbg_printf("%lld ms - Philosoher %d is thinking\n", timestamp[philo->pos], philo->pos);
@@ -73,7 +73,7 @@ void *philosopher (void *arg)
 	return (NULL);
 }
 
-void Spawn(t_philosophers *philo, long *time, pthread_mutex_t **m_fork, int i)
+void Spawn(t_philosophers *philo, long *time, int i)
 {
 	static int death;
 
@@ -125,7 +125,7 @@ void down_forks (int c1, int c2)
 	pthread_mutex_unlock (&m_fork[c2]);
 }
 
-int get_token ()
+void get_token ()
 {
 	int successful;
 

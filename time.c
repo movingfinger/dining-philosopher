@@ -6,7 +6,7 @@
 /*   By: sako <sako@student.42.fr>                  +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2020/06/08 10:55:32 by sako              #+#    #+#             */
-/*   Updated: 2020/06/08 22:51:03 by sako             ###   ########.fr       */
+/*   Updated: 2020/06/08 23:55:18 by sako             ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -43,7 +43,7 @@ void *life_cycle(void *arg)
 	{
 		gettimeofday(&time2, NULL);
 		elapsed = (((time2.tv_sec - time.tv_sec) * 1000 + ((time2.tv_usec - time.tv_usec) / 1000)));
-		timestamp[philo->pos] = (time2.tv_sec - time_start.tv_sec) * 1000 + (time2.tv_usec - time_start.tv_usec) / 1000;
+		timestamp[philo->pos] = *philo->time;
 		if (die_seconds <= elapsed)
 		{			
 			philo->state = 3;
