@@ -46,6 +46,7 @@ int main(int ac, char **av)
 
 	m_fork = (pthread_mutex_t *)malloc(sizeof(pthread_mutex_t) * num_philo);
 	t_philo = (t_philosophers *)malloc(sizeof(t_philosophers) * num_philo);
+	timestamp = (long long *)malloc(sizeof(long long) * num_philo);
 	pthread_mutex_init (&food_lock, NULL);
 	pthread_mutex_init (&num_can_eat_lock, NULL);
 
@@ -54,23 +55,29 @@ int main(int ac, char **av)
 		pthread_mutex_init (&m_fork[i], NULL);
 		Spawn(&t_philo[i], &time_basic, &m_fork, i);
 	}
-	//printf("Spawn done\n");
-
-	//for (i = 0; i < num_philo; i++)
-	//	pthread_join (t_philo[i].thread_philo, NULL);
+	
 	for (i = 0; i < num_philo; i++)
 	{
 		pthread_join (t_philo[i].thread_philo, NULL);
 		pthread_join (t_philo[i].thread_philo_time, NULL);
 	}
-	//printf("All done!\n");
+
+	for (i = 0; i < num_philo; i++)
+	{
+		pthread_mutex_destroy (&m_fork[i]);
+	}
+	for (i = 0; i < num_philo; i++)
+		if (t_philo[i].eat_count)
+			 check_food += t_philo[i].eat_count;
+	if (!check_food)
+		printf("All philosophers are happy now!\n");
 	return (0);
 }
 
 int food_on_table (t_philosophers *philo)
 {
 	pthread_mutex_lock (&food_lock);
-	printf("Philosopher %d food left %d\n", philo->pos, philo->eat_count);
+	printf("%lld ms - Philosopher %d food left %d\n", timestamp[philo->pos], philo->pos, philo->eat_count);
 	philo->eat_count--;
 	pthread_mutex_unlock (&food_lock);
 	return (philo->eat_count);
@@ -91,23 +98,23 @@ void *philosopher (void *arg)
 	// Wrap around the forks.
 	if (left_fork == num_philo)
 		left_fork = 0;
-	//pthread_create(&philo->thread_philo, NULL, life_cycle, philo);
 	pthread_create(&philo->thread_philo_time, NULL, life_cycle, philo);
 	while (i = food_on_table(philo))
 	{
 		philo->state = 1;
-		printf("Philosoher %d is thinkg\n", philo->pos);
+		printf("%lld ms - Philosoher %d is thinkg\n", timestamp[philo->pos], philo->pos);
 		usleep(10);
 		philo->state = 0;
-		printf ("Philosopher %d is eating. \n", philo->pos);
+		printf ("%lld ms - Philosopher %d is eating. \n", timestamp[philo->pos], philo->pos);
 		eat(philo, left_fork, right_fork);
 		pthread_create(&philo->thread_philo_time, NULL, life_cycle, philo);
 		philo->state = 2;
-		printf("Philosopher %d is sleeping now\n", philo->pos);
-		usleep(sleep_seconds * 1000);
+		printf("%lld ms - Philosopher %d is sleeping now\n", timestamp[philo->pos], philo->pos);
+		//usleep(sleep_seconds * 1000);
+		usleep(sleep_seconds);
 		if (!i)
 		{
-			printf("Philosopher %d died\n", philo->pos);
+			printf("%lld ms - Philosopher %d died\n", timestamp[philo->pos], philo->pos);
 			exit (0);
 		}
 	}
@@ -146,8 +153,8 @@ void eat(t_philosophers *philo, int left, int right)
 	grab_fork (id, right);
 	grab_fork (id, left);
 
-	printf ("Philosopher %d: eating\n", id);
-	usleep (eat_seconds * 1000);
+	printf ("%lld ms - Philosopher %d: eating\n", timestamp[philo->pos], id);
+	usleep (eat_seconds);
 	down_forks (left, right);
 	return_token ();
 }
@@ -200,7 +207,7 @@ void *time_ct(void *var)
 	while (1)
 	{
 		gettimeofday(&time2, NULL);
-		*elapsed = (((time2.tv_sec - time.tv_sec) * 1000 + ((time2.tv_usec - time.tv_usec))));
+		*elapsed = (((time2.tv_sec - time.tv_sec) * 1000 + ((time2.tv_usec - time.tv_usec) / 1000)));
 		if (*elapsed < 0)
 			*elapsed *= -1;
 	}
@@ -219,20 +226,16 @@ void *life_cycle(void *arg)
 	while (1)
 	{
 		gettimeofday(&time2, NULL);
-		elapsed = (((time2.tv_sec - time.tv_sec) * 1000 + ((time2.tv_usec - time.tv_usec))));
-		
-		// if timestamp over time to die, then die.
-		if (die_seconds * 1000 <= elapsed)
+		elapsed = (((time2.tv_sec - time.tv_sec) * 1000 + ((time2.tv_usec - time.tv_usec) / 1000)));
+		timestamp[philo->pos] = time2.tv_usec / 1000;
+		if (die_seconds <= elapsed)
 		{			
 			philo->current = *philo->time;
 			philo->state = 3;
-			printf("Die second is %d and elapsed is %llu. Philosopher %d died\n", die_seconds, elapsed, philo->pos);
+			printf("%lld ms - Philosopher %d died\n", timestamp[philo->pos], philo->pos);
 			exit (0);
 		}
-		if (philo->state == 0)	// if eating state
-		{
-			//printf("status changed to eating\n");
+		if (philo->state == 0)
 			pthread_exit(NULL);
-		}
 	}
 }
